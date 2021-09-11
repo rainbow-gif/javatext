@@ -1,0 +1,674 @@
+引入SpringBoot的pom依赖
+
+　　父模块依赖 ：spring-boot-starter-parent
+　　启动依赖：spring-boot-starter-web
+　　测试依赖：spring-boot-starter-test
+　　热部署依赖：spring-boot-devtools
+
+入口函数标记注解:@SpringBootApplication
+//启动嵌入的tomcat组建，并且初始化Spring环境和组件
+SpringApplication.run(Application.class,args)
+
+创建Controller控制器
+//@RequestMappring 映射地址
+
+原来的SpringMVC控制器的注解： @Controller
+
+　　方法上，向页面输出JSON字符串的注解： @ResponseBody 输出内容转JSON
+
+　　@RestController = @Controller + @ResponseBody
+
+注意：
+
+　　　　1.默认端口号是8080
+
+　　　　2.默认访问地址没有项目名也就是没有项目地址
+
+
+
+打成jar包发布项目
+1.在pom.xml文件中添加一个SpringBoot依赖插件（放在dependencies下面）
+2.打包操作
+打包命令：clean package
+
+　　　　打包流程：
+
+　　　　　　选中项目 右键 --> Run As --> 点击 maven build --> 点击 golas 输入 打包命令：clean package
+Springboot的application.properties/application.yml 文件还可以配置一些自定义属性，用来给对象属性赋值，方便代码维护，以及解耦合
+应用场景：springMvc文件上传，定义全局文件夹路径。
+
+链接：https://www.cnblogs.com/awzf/p/9953216.html
+SpringBoot开发流程
+目录
+一、 maven创建SpringBoot项目 
+二、项目应用
+    1.springboot的项目结构
+    2.springboot的常规开发
+三、springboot的核心配置文件
+    1.application.properties   
+    2.application.yml
+    3.自定义springboot配置
+四、springboot的环境配置
+五、springboot整合Mybatis
+    1.导入相关依赖jar
+    2.在配置文件中加入连接池以及mybatis的相关配置
+六、springboot整合Redis
+    1.导入依赖
+    2.在application.yml中添加redis配置
+    3.自定义redis的key/value 序列化配置，否则redis中存放的key/value是二进制格式，根据key删除时，找不到指定key。注：这里使用的是RedisTemplate。
+    4.Redis的开发使用
+七、springboot集成shiro
+    1.引入相关依赖
+    2.准备shiro的配置文件
+八、springboot整合JSP
+    1.引入相关依赖
+    2.手动创建webapp 静态资源文件夹
+    3.在application.yml 中引入视图解析配置
+
+
+一、 maven创建SpringBoot项目 
+选择JDK版本；语言选择，选java语言；选择之后发布的项目格式；默认创建的包结构；
+之后再选择创建的项目类型，如web项目.
+
+疑问，web项目和maven项目的区别
+
+***************************************************
+需要说明两点：
+
+（1）类文件要放在跟启动类同级或者下一目录下，因为springboot默认扫描加载启动类同级或者下级目录的标签类
+（@RestController，@Service ，@Configuraion，@Component等），
+假如真需要加载其他目录的标签类，可以通过在启动上配置标签@ComponentScan(具体包)来进行扫描加载。
+***************************************************
+
+二、项目应用
+    1.springboot的项目结构
+示例图
+
+    2.springboot的常规开发
+由于springboot先天性集成了spring/springmvc，所以我们不需要编写相关配置文件，直接开发即可。
+
+三、springboot的核心配置文件
+Springboot的核心配置文件主要是来修改一些基本配置(服务器端口号、项目访问名字)以及集成配置(数据源、mybatis、redis等等)
+Springboot的核心配置文件分为两种形式：（注意：名字都必须为application）
+
+在实际开发过程中，不同的开发环境，我们使用的配置信息也是不一样的，这关系到连接池配置、工厂配置等等
+例如：
+生产环境（线上环境）
+开发环境（线下环境）
+测试环境（单元测试）
+不同的环境我们要指定不同的配置文件，相对springboot给我们提供了这样的便利。
+注意:也可以在application.properties总配置文件中引入application-dev.properties(开发)或application-prod.properties(生产)或application-test.properties(测试) 达到动态切换环境的目的
+
+
+
+Springboot的核心配置文件主要是来修改一些基本配置(服务器端口号、项目访问名字)
+Springboot的核心配置文件分为两种形式：（注意：名字都必须为application）
+以及集成配置(数据源、mybatis、redis等等)
+Springboot的application.properties/application.yml 文件还可以配置一些自定义属性，用来给对象属性赋值，方便代码维护，以及解耦合
+
+应用场景：springMvc文件上传，定义全局文件夹路径。
+
+在application.yml中添加自定义属性配置
+方式一：通过@Value(“${upload.imagePath}”)
+#定义全局文件上传路径
+upload:
+  imagePath: /productImages
+
+@Controller
+@RequestMapping("user")
+public class UserController{
+@Autowired private UserService userService;
+@Value("${upload.imagePath}")
+@Atuowired private String imagePath;
+}
+
+方式二：定义通用映射解析
+自定义通用配置类，配置常用的属性，在初始化时完成属性映射赋值。
+@ConfigurationProperties(prefix="upload")
+public class ConfigBean{
+private String imagePath;
+private String getImagePath(){
+return imagePath;
+}
+}
+注意：提供get/set方法
+@RequestMapping("user")
+public class UserController{
+@Autowired private ConfigBean configBean;
+}
+
+@SpringBootApplication
+@EnableConfigurationProperties(ConfigBean.class)//解析自定义配置类，完成属性映射
+public class SpringbootApplication{
+}
+    1.application.properties   
+    2.application.yml
+    3.自定义springboot配置
+
+在application.properties中添加自定义属性配置
+
+1.application.properties配置文件中定义自定义属性
+
+com.sam.name=sam
+com.sam.age=11
+com.sam.desc=magical sam
+
+
+2、编写Bean类，加载属性
+
+Sam类需要添加@Component注解，让spring在启动的时候扫描到该类，并添加到spring容器中。
+第一种：使用spring支持的@Value()加载
+
+package com.sam.demo.conf;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+@Component
+public class Sam {
+
+    //获取application.properties的属性
+    @Value("${com.sam.name}")
+    private String name;
+
+    @Value("${com.sam.age}")
+    private int age;
+
+    @Value("${com.sam.desc}")
+    private String desc;
+    
+    //getter & setter
+}
+
+
+第二种：使用@ConfigurationProperties(prefix="") 设置前缀，属性上不需要添加注解。
+package com.sam.demo.conf;
+import org.springframework.stereotype.Component;
+
+@Component
+@ConfigurationProperties(prefix = "com.sam")
+public class Sam {
+
+    private String name;
+
+    private int age;
+
+    private String desc;
+
+    //getter & setter
+}
+
+3、在controller中注入并使用Sam这个Bean。
+package com.sam.demo.controller;
+
+import com.sam.demo.conf.Sam;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class IndexController {
+
+    @Autowired
+    private Sam sam;
+
+    @RequestMapping("/index")
+    public String index() {
+        System.out.println(sam.getName() + " " + sam.getAge() + " " + sam.getDesc());
+        return "index";
+    }
+
+}
+四、springboot的环境配置
+在实际开发过程中，不同的开发环境，我们使用的配置信息也是不一样的，这关系到连接池配置、工厂配置等等
+例如：
+生产环境（线上环境）
+开发环境（线下环境）
+测试环境（单元测试）
+不同的环境我们要指定不同的配置文件，相对springboot给我们提供了这样的便利。
+也可以在application.properties总配置文件中引入application-dev.properties(开发)或application-prod.properties(生产)或application-test.properties(测试) 
+达到动态切换环境的目的
+示图：   #开发：dev
+         #生产：prod
+         spring.profiles.active=dev
+
+1.总配置文件，一如子配置
+2.开发环境
+3.生产环境
+4.测试环境
+
+
+五、springboot整合Mybatis
+    1.导入相关依赖jar
+
+示例：
+<!--mybatis 依赖-->
+    <dependency>
+        <groupId>org.mybatis.spring.boot</groupId>
+        <artifactId>mybatis-spring-boot-starter</artifactId>
+        <version>1.3.2</version>
+    </dependency>
+    <dependency>
+        <groupId>mysql</groupId>
+        <artifactId>mysql-connector-java</artifactId>
+        <version>5.1.10</version>
+    </dependency>
+    <!-- 分页插件 -->
+    <dependency>
+        <groupId>com.github.pagehelper</groupId>
+        <artifactId>pagehelper-spring-boot-starter</artifactId>
+        <version>1.2.3</version>
+    </dependency>
+
+<!--连接池配置-->
+<dependency>
+    <groupId>com.alibaba</groupId>
+    <artifactId>druid</artifactId>
+    <version>1.0.31</version>
+</dependency>
+<!--log4j-->
+<dependency>
+    <groupId>log4j</groupId>
+    <artifactId>log4j</artifactId>
+    <version>1.2.17</version>
+</dependency>
+
+
+    2.在配置文件中加入连接池以及mybatis的相关配置
+
+3.Demo测试
+
+六、springboot整合Redis
+    1.导入依赖
+    2.在application.yml中添加redis配置
+    3.自定义redis的key/value 序列化配置，否则redis中存放的key/value是二进制格式，根据key删除时，找不到指定key。注：这里使用的是RedisTemplate。
+//通过注解让springboot完成对象的自动装配
+@Component
+public calss RedisConfig{
+ @Autowired public RedisTemplate redisTemplate;
+ public RedisTemplate redisTemplate(){
+  //指定key的序列化实现类
+  redisTemplate.setKeySerializer(new StringRedisSerializer());
+  //指定value的序列化实现类
+  redisTemplate.setValueSerializer(new JdkStringRedisSerializer());
+  return redisTemplate;
+}
+}
+
+    4.Redis的开发使用
+@Service
+public class UserServiceImpl implements UserService{
+ @Autowired private UserMapper userDao;
+ @Autowired private RedisConfig redisConfig;
+ @Override
+ public String login(String username,String password){
+ PageHelper.startPage(2,3);
+ List<User> users = userDao.selectALL();
+ //存放
+ redisConfig.redisTemplate().opsForValue().set("users",users);
+ //取值
+ List<User> userList =(List<User>)redisConfig.redisTemplate().opsForValue().get("users");
+
+ PageInfo<User> info = new PageInfo<>(user);
+ List<User> list = info.getList();
+ return "账号"+username+"密码："+password;
+}
+}
+七、springboot集成shiro
+    1.引入相关依赖
+    2.准备shiro的配置文件
+八、springboot整合JSP
+    1.引入相关依赖
+    2.手动创建webapp 静态资源文件夹
+    3.在application.yml 中引入视图解析配置
+
+
+
+
+
+
+SpringBoot启动流程:
+
+    第一步，加载配置文件：application.properties
+    第二步，自动装配：
+    ArtifactId
+    spring-boot-starter-web,增加Web支持
+    spring-boot-starter-data-jar,对JPA支持，集成Hibernate
+    spring-boot-starter-logging，增加logback日志的支持
+    spring-boot-starter-test，集成Junit单元测试框架
+    第三步，加载组件
+    @Repository  @Service @Controller @Component @Entity
+    第四步，应用初始化
+
+SpringBoot入口类
+
+入口类名通常以*Application结尾
+入口类上增加@SpringBootApplication注解
+利用SpringApplication.run()方法启动应用
+
+
+spring boot异步操作
+业务场景：
+
+一个接口，既需要返回查询结果，又需要将查询结果存储（或更新）到数据库
+为了是更快速的返回查询结果，在查询结束时，立即将值返回，而更新数据库的操作放在后端异步执行，不阻塞查询值的返回
+
+一、spring boot 项目实现简单异步执行操作
+1、在 service实现方法上加@Async注解
+2、在项目启动类上加@EnableAsync注解
+
+二、基于spring boot的Dubbo项目实现简单异步执行操作
+<dubbo:reference interface="service" id="idName" >
+    <dubbo:method name="methodName" async="true" />
+</dubbo:reference>
+
+
+总体设计
+
+    本项目用到的技术和框架
+        项目构建： maven
+        web框架：spring boot
+        数据库ORM：mybatis
+        数据库连接池：Druid
+        分页插件：PageHelper
+        数据库：mysql
+        缓存NOSQL：redis
+        前段模板：thymeleaf
+        文章展示：使用commonmark，将markdown转成html页面
+
+
+可靠性设计
+    后台管理，可以系统日志，查看系统运行状态
+    定时发送邮件，发送服务端的可用内存，cpu，最新日志，硬盘情况进行监控
+    对于恶意的IP，支持黑名单设置，禁止访问
+
+
+编写service层，根据需求分析和概要设计，将具体业务转成具体代码
+
+
+
+页面与后端的交换主要是在controller包中，springboot的页面开发和springmvc是几乎一样的，@PostMapping和@GetMapping这两个注解也是方便了开发。
+
+统一的异常处理，使用@ControllerAdvice，定义异常页面，设置自动跳转500，404页面。
+
+拦截器，获取http请求中的ip，判断是否在黑名单（如果在，则禁止访问系统）
+
+
+系统安全
+
+    使用阿里云云主机，借助阿里云本身防护机制，
+
+    在主机中安装denyhosts，对于尝试暴力破解ssh的IP，实施封禁
+
+    对于评论部分，能够抵御sql注入和xss攻击
+
+
+
+
+3.提供starter简化Maven配置
+
+使用Spring或者SpringMVC我们需要添加大量的依赖，而这些依赖很多都是固定的，这里Spring Boot 通过starter能够帮助我们简化Maven配置。
+
+
+
+关闭特定的自动配置
+
+在上面一小节中我们看到@ComponentScan注解是有一个过滤器的，如果我们只想要@SpringBootApplication去扫描特定的类而不是全部类，那么就可以关闭自动配置，如下：
+
+@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
+
+
+.SpringBoot项目大概分为四层：
+
+（1）DAO层：包括XxxMapper.java(数据库访问接口类)，XxxMapper.xml(数据库链接实现)；（这个命名，有人喜欢用Dao命名，有人喜欢用Mapper，看个人习惯了吧）
+
+（2）Bean层：也叫model层，模型层，entity层，实体层，就是数据库表的映射实体类，存放POJO对象；
+
+（3）Service层：也叫服务层，业务层，包括XxxService.java(业务接口类)，XxxServiceImpl.java（业务实现类）；（可以在service文件夹下新建impl文件放业务实现类，也可以把业务实现类单独放一个文件夹下，更清晰）
+
+（4）Web层：就是Controller层，实现与web前端的交互。
+
+DAO层访问数据库接口文件： 
+xml:DAO层访问数据库实现文件（需在resource包下创建mapper文件夹，然后再创建一个UserMapper.xml.在application配置文件中mybatis:mapper-locations:对应的就是该文件地址），注意<mapper>标签的namespace属性要填写 访问数据库接口类文件路径：
+
+Service层业务接口类编写： 
+Service层业务实现类编写，注意要注解@Service，注入DAO：
+项目启动类要添加注解@MapperScan项目启动时扫描mapper接口，否则会报错找不到mapper文件：
+编写测试类，看是否能成功 访问数据库，获取数据库信息：
+controller层，注意添加@controller注解，注入Service服务：
+
+
+先运行测试类，看是否成功获取数据库信息：
+
+
+
+ 编码简单，SpringBoot只需要在pom文件中添加一个starter-web依赖，即可帮助开发者快速启动一个web容器，非常方便。
+
+配置简单，SpringBoot可以通过简单的注解方式来代替原先Spring非常复杂的xml方式。如果我想把一个普通的类交给Spring管理，只需要添加@Configuration和@Bean两个注解即可。
+
+
+ SpringBoot中添加拦截器只需继承WebMvcConfigurerAdapter，并重写addInterceptors方法即可。
+自定义的拦截器需要初始化一些参数，因此需要在注册拦截器之前注册，这里我们设置为懒加载。免登录拦截的路径，以及登录后不需要判断权限的路径都写在yml文件了，通过系统环境变量Environment获取值。
+@Autowired
+@Lazy
+private PermissionInterceptor permissionInterceptor;
+@Autowired
+private Environment environment;
+
+/**
+*
+*/
+@Bean
+public PermissionInterceptor permissionInterceptor() {
+PermissionInterceptor permissionInterceptor = new PermissionInterceptor();
+List<String> excludeUrls = Arrays.asList(environment.getProperty ("intercept.exclude.path").split(","));
+List<String> commonUrls = Arrays.asList(environment.getProperty ("intercept.login.exclude.path").split(","));
+permissionIntercepto r.setCommonUrls(commonUrls);
+permissionInterceptor .setExcludeUrls(excludeUrls);
+return permissionInterceptor;
+}
+
+springboot项目架构图
+
+ 4）事务
+
+Spring事务有两种处理方式：
+
+编程式
+
+用TransactionTemplate或者直接使用底层的PlatformTransactionManager将事务代码写在业务代码中。
+
+优点：可以在代码块中处理事务，比较灵活。
+
+缺点：对代码具有侵入性。
+
+声明式
+
+采用@Transactional注解或者基于配置文件方式，在方法前后进行拦截。
+
+优点：非侵入性不会污染代码。
+
+缺点：事务只能在方法和类上控制，粒度较小。
+SpringBoot工程可以用@EnableTransactionManagement注解代替上面的配置内容
+
+ 改造后的SpringBoot基于Java代码：
+@Aspect
+@Configuration
+public class TransactionAdviceConfig {
+
+/**
+* 指定切入点
+*/
+private static final String AOP_POINTCUT_EXPRESSION = "execution ( public * com.creditease.permission .service.impl.*Impl.*(..))";
+
+@Resource
+DruidDataSource dataSource;
+
+/**
+* 指定处理事务的PlatformTransactionManager
+* @return
+*/
+@Bean
+public DataSourceTransactionManager transactionManager() {
+
+return new DataSourceTransactionManager(dataSource);
+
+}
+
+/**
+* 指定切入点处理逻辑，执行事务
+* @return
+*/
+@Bean
+public TransactionInterceptor txAdvice() {
+
+DefaultTransactionAttribute txAttrRequired = new DefaultTransactionAttribute();
+txAttrRequired.setPropagationBehavior (TransactionDefinition.PROPAGATION_REQUIRED);
+
+DefaultTransactionAttribute txAttrRequiredReadonly = new DefaultTransactionAttribute();
+txAttrRequiredReadonly.setPropagationBehavior (TransactionDefinition.PROPAGATION_REQUIRED);
+txAttrRequiredReadonly.setReadOnly(true);
+
+NameMatchTransactionAttributeSource source = new NameMatchTransactionAttributeSource();
+source.addTransactionalMethod ("query*", txAttrRequiredReadonly);
+source.addTransactionalMethod ("find*", txAttrRequiredReadonly);
+source.addTransactionalMethod ("save*", txAttrRequired);
+source.addTransactionalMethod ("delete*", txAttrRequired);
+source.addTransactionalMethod ("add*", txAttrRequired);
+source.addTransactionalMethod ("modify*", txAttrRequired);
+return new TransactionInterceptor (transactionManager(), source);
+}
+
+/**
+* Advisor组装配置，将Advice的代码逻辑注入到Pointcut位置
+* @return
+*/
+@Bean
+public Advisor txAdviceAdvisor() {
+
+AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
+pointcut.setExpression (AOP_POINTCUT_EXPRESSION);
+return new DefaultPointcutAdvisor (pointcut, txAdvice());
+}
+
+ 5）全局异常处理
+
+一般编码时有异常我们都会try-catch捕获异常，有时为了区分不同的异常还会一次catch多个异常，大量的try-catch语句，这样使得代码也不够优雅；一个相同的异常处理写多次代码也比较冗余，所以引入全局的异常处理非常必要。
+
+SpringBoot中采用@RestControllerAdvice或者@ControllerAdvice设置全局异常类。这两者区别类似于@Controller和@RestController注解。
+
+
+链接：http://www.uml.org.cn/wfw/201908292.asp
+
+
+
+@ControllerAdvice 注解，使用该注解即表示开启全局异常捕获，
+接下来我们只需在自定义的方法上使用@ExceptionHandler注解，并定义捕获异常的类型，
+对这种类型的异常进行统一的处理。可以用于定义@ExceptionHandler，并应用到配置了@RequestMapping 的控制器中。
+
+
+
+注解@ControllerAdvice表示这是一个控制器增强类，当控制器发生异常且符合类中定义的拦截异常类，将会被拦截，可以定义拦截的控制器所在的包路径
+基于@ControllerAdvice注解的Controller层的全局异常统一处理
+经过测试发现可以捕获到Controller层的异常，当前前提是Controller层没有对异常进行catch处理，如果Controller层对异常进行了catch处理，那么在这里就不会捕获到Controller层的异常了，所以这一点要特别注意。
+
+在实际测试中还发现，如果在Controller中不做异常catch处理，在service中抛出异常（service中也不错异常catch处理），那么也是可以在这里捕获到异常的。
+经过测试，可以捕获到所有层面上的异常，当前前提仍然是没有对异常进行catch处理，否则这里也是捕获不到
+
+以上为网络上常用的两种全局异常统一处理方案，经过实际测试发现都可以实现满足要求。
+
+其实基于AOP也可以实现异常的全局处理，自己相应的做了测试发现也满足要求，相应的代码如下：
+
+默认情况下，Spring Boot为两种情况提供了不同的响应方式。
+
+一种是浏览器客户端请求一个不存在的页面或服务端处理发生异常时，一般情况下浏览器默认发送的请求头中Accept: text/html，所以Spring Boot默认会响应一个html文档内容，称作“Whitelabel Error Page”。
+另一种是使用Postman等调试工具发送请求一个不存在的url或服务端处理发生异常时，Spring Boot会返回类似如下的Json格式字符串信息
+原理也很简单，Spring Boot 默认提供了程序出错的结果映射路径/error。这个/error请求会在BasicErrorController中处理，其内部是通过判断请求头中的Accept的内容是否为text/html来区分请求是来自客户端浏览器（浏览器通常默认自动发送请求头内容Accept:text/html）还是客户端接口的调用，以此来决定返回页面视图还是 JSON 消息内容。
+相关BasicErrorController中代码如下：
+
+全局异常处理主要的好处：
+
+统一接口返回格式。比如说请求方法错误，本来是get但是用成了post，这种错误都不会经过自己写的代码，无法控制返回的数据格式。
+方便记录日志。跟上面一样的道理，有的错误框架直接返回了，可能都没有日志记录。
+减少冗余代码。统一处理总比每一个接口自己处理要好吧。
+
+
+实现：
+实现原理很简单，就是模仿BasicErrorController的实现思路，继承AbstractErrorController并重写error方法，然后再配置文件里面进行配置覆盖默认配置就好了。
+1.继承AbstractErrorController并重写error方法
+
+3. Controller 层: 
+   (1) Controller 层负责组装 Service, 在关键步骤上应该加日志输出 (info 级别) 
+   (2) Controller 层不应再主动 throw 异常. 
+4. 统一异常 Controller 层: 
+   (1) 通过 json 或 UI 返回详细的报错信息, 包括 HttpStatus 和详尽的 BusinessErrorCode/BusinessErrorMessage 以及 DetailErrorMessage(来源于 exception.getMessage()), 甚至包括 exception 的 stack trace. 
+   (2) 对于 Exception 类的异常, 说明这是我们预料之外的报错, 应该使用 logger.error() 级别记录; 
+   (3) 对于 BusinessException 和子类的异常, 则说明我们的程序已经预料到了, 事物该回滚也已经回滚了, 所以应该以 logger.warn() 或 logger.info() 记录日志. 
+   (4) 对于 Spring Boot 缺省的 /error 进行定制, 增加一些"系统主页"和"返回"的链接, 改善用户体验.
+
+（4）一些重要的注意事项：
+
+A．dao层一般不需要抛出异常，有事务的情况下，会将service的异常抛出到控制层做处理的，不然可能会影响事务的回滚，如果不存在事务，则可以直接在service层进行处理。
+
+B．针对预期可能发生的异常（检查类型（checked）），在代码手动处理异常可以try/catch捕获，可以向上抛出，可以声明。
+
+try-catch 是在当前位置处理异常，尝试能不能正常的走完整个作用域，如果不能则抛出一个异常。
+throws是向上抛出异常，用来声明一个方法可能产生的所有异常，不做任何处理而是将异常往上传，谁调用我我就抛给谁，throws在方法后边声明异常，其实就是自己不想对异常做出任何的处理，告诉别人自己可能出现的异常，交给别人处理
+
+throw 就是抛出一个具体的异常，并获取这个异常的引用，这个异常会被抛到外部的环境，由外部环境进行处理。
+
+ 
+
+C 在service中如果声明了@Transactional，但是又在方法里面自己捕获了异常，也就是try catch掉了，那就不会回滚了，因为切入点根本没捕获到，也谈不上调用增强处理中的方法了。解决：1.抛出RuntimeException 2.抛出Exception，同时在事务声明中加上@Transactional(rollbackFor = Exception.class)
+————————————————
+版权声明：本文为CSDN博主「傅里叶、」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/qq_34562093/article/details/98315172
+
+
+什么是AOP
+AOP：Aspect Oriented Programming，中文翻译为”面向切面编程“。面向切面编程是一种编程范式，它作为OOP面向对象编程的一种补充，用于处理系统中分布于各个模块的横切关注点，比如事务管理、权限控制、缓存控制、日志打印等等。AOP采取横向抽取机制，取代了传统纵向继承体系的重复性代码
+AOP把软件的功能模块分为两个部分：核心关注点和横切关注点。业务处理的主要功能为核心关注点，而非核心、需要拓展的功能为横切关注点。AOP的作用在于分离系统中的各种关注点，将核心关注点和横切关注点进行分离
+使用AOP有诸多好处，如：
+1.集中处理某一关注点/横切逻辑
+2.可以很方便的添加/删除关注点
+3.侵入性少，增强代码可读性及可维护性
+
+SpringBoot将所有的常见开发功能，分成了一个个场景启动器（starter），这样我们需要开发什么功能，就导入什么场景启动器依赖即可。
+比如，我们需要开发web的功能，那么引入spring-boot-starter-web
+比如，我们需要开发模板页的功能，那么引入spring-boot-starter-thymeleaf
+我们需要整合redis，那么引入spring-boot-starter-data-redis
+我们需要整合amqp，实现异步消息通信机制，那么引入spring-boot-starter-amqp
+等等，就是这么方便
+我们来看看SpringBoot的启动类代码，除了一个关键的注解，其他都是普通的类和main方法定义
+那么，我们来观察下这个注解背后的东西，发现，这个注解是一个复合注解，包含了很多的信息
+其他注解都是一个注解的常规配置，所以关键看圈中的这两个
+
+我们来分析第一个关键注解：@SpringBootConfiguration
+
+我们可以看到，内部是包含了@Configuration，这是Spring定义配置类的注解
+
+而@Configuration实际上就是一个@Component，表示一个受Spring管理的组件
+pom工程统一控制版本
+
+
+结论：
+所有我们使用了SpringBoot之后，由于父工程有对版本的统一控制，所以大部分第三方包，我们无需关注版本，个别没有纳入SpringBoot管理的，才需要设置版本号
+
+1.2 SpringBoot将所有的常见开发功能，分成了一个个场景启动器（starter），这样我们需要开发什么功能，就导入什么场景启动器依赖即可。
+比如，我们现在要开发web项目，所以我们导入了spring-boot-starter-web
+
+SpringBoot是通过定义各种各样的Starter来管理这些依赖的
+比如，我们需要开发web的功能，那么引入spring-boot-starter-web
+比如，我们需要开发模板页的功能，那么引入spring-boot-starter-thymeleaf
+我们需要整合redis，那么引入spring-boot-starter-data-redis
+我们需要整合amqp，实现异步消息通信机制，那么引入spring-boot-starter-amqp
+
+内部是包含了@Configuration，这是Spring定义配置类的注解。而@Configuration实际上就是一个@Component，表示一个受Spring管理的组件
+@EnableAutoConfiguration这个注解的作用是告诉SpringBoot开启自动配置功能，这样就减少了我们的配置
+
+@AutoConfigurationPackage注解的内部是采用了@Import，来给容器导入一个Registrar组件，这个组件会去加载启动类所在包下面的所有类，
+这也是controller，service必须在启动类的同级目录或子级目录的原因。
+再来分析@Import(AutoConfigurationImportSelector.class)，这个的关键是来看AutoConfigurationImportSelector.class内部的细节，
+在这个类的内部，有一个关键的方法，
+
+getCandidateConfigurations(AnnotationMetadata anotationMetadata)
